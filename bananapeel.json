@@ -1,6 +1,8 @@
 {
   "name": "banana-clicker",
-  "version": "1.0.0",
-  "description": "Click the banana. Get bananas.",
-  "main": "banana-clicker.html"
+  "title": "Banana Clicker",
+  "version": "1.2.0",
+  "description": "Click bananas, buy monkeys — right in your terminal.",
+  "main": "banana-clicker.js",
+  "icon": "icon.png"
 }
