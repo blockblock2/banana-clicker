@@ -5,22 +5,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banana Clicker</title>
 <style>
-  body { font-family: -apple-system, sans-serif; text-align: center; background: #fff8c4; margin: 0; padding: 40px; }
-  button { font-size: 120px; background: none; border: none; cursor: pointer; transition: transform .08s; }
-  button:active { transform: scale(0.88); }
-  h1 { color: #7a5a00; }
+  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+  body { margin: 0; height: 100vh; font-family: -apple-system, "Segoe UI", sans-serif;
+         background: radial-gradient(circle at 50% 35%, #fff6b0, #ffd84d 70%, #f5b800);
+         color: #5a3d00; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+  h1 { margin: 22px 0 0; font-size: 26px; letter-spacing: 1px; }
+  #count { font-size: 44px; font-weight: 800; margin-top: 6px; }
+  #rate { font-size: 14px; opacity: .75; }
+  #banana { font-size: 150px; background: none; border: none; cursor: pointer; margin: 10px 0;
+            transition: transform .07s; filter: drop-shadow(0 8px 10px rgba(120,80,0,.35)); }
+  #banana:active { transform: scale(.88) rotate(-8deg); }
+  .shop { width: 90%; max-width: 380px; display: grid; gap: 10px; }
+  .item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: none; border-radius: 14px;
+          background: rgba(255,255,255,.75); font: inherit; color: inherit; cursor: pointer; text-align: left; }
+  .item:disabled { opacity: .45; cursor: default; }
+  .item:not(:disabled):hover { background: #fff; }
+  .item .emoji { font-size: 30px; }
+  .item b { display: block; }
+  .item small { opacity: .7; }
+  .item .own { margin-left: auto; font-weight: 800; font-size: 20px; }
+  .pop { position: fixed; font-weight: 800; font-size: 22px; pointer-events: none; animation: up .8s ease-out forwards; }
+  @keyframes up { to { transform: translateY(-70px); opacity: 0; } }
+  #reset { position: fixed; bottom: 8px; right: 10px; background: none; border: none; color: inherit; opacity: .4; cursor: pointer; font: inherit; font-size: 12px; }
 </style>
 </head>
 <body>
-  <h1>Banana Clicker</h1>
-  <button id="banana">🍌</button>
-  <h2 id="score">0 bananas</h2>
-  <script>
-    let n = 0;
-    document.getElementById("banana").onclick = () => {
-      n++;
-      document.getElementById("score").textContent = n + (n === 1 ? " banana" : " bananas");
+  <h1>🍌 BANANA CLICKER 🍌</h1>
+  <div id="count">0</div>
+  <div id="rate">0 bananas per second</div>
+  <button id="banana" title="Click me!">🍌</button>
+  <div class="shop" id="shop"></div>
+  <button id="reset">reset game</button>
+
+<script>
+  const shopItems = [
+    { id: "monkey",  emoji: "🐒", name: "Monkey",        price: 15,   perSec: 1 },
+    { id: "tree",    emoji: "🌴", name: "Banana Tree",   price: 120,  perSec: 6 },
+    { id: "truck",   emoji: "🚚", name: "Banana Truck",  price: 900,  perSec: 40 },
+    { id: "rocket",  emoji: "🚀", name: "Banana Rocket", price: 7000, perSec: 250 },
+  ];
+
+  let state = { bananas: 0, owned: {} };
+  try { state = JSON.parse(localStorage.getItem("banana-clicker")) || state; } catch {}
+  const save = () => { try { localStorage.setItem("banana-clicker", JSON.stringify(state)); } catch {} };
+
+  const owned = (id) => state.owned[id] || 0;
+  const price = (item) => Math.ceil(item.price * Math.pow(1.15, owned(item.id)));
+  const perSec = () => shopItems.reduce((sum, it) => sum + it.perSec * owned(it.id), 0);
+  const fmt = (n) => Math.floor(n).toLocaleString();
+
+  const shop = document.getElementById("shop");
+  for (const item of shopItems) {
+    const b = document.createElement("button");
+    b.className = "item"; b.id = "buy-" + item.id;
+    b.innerHTML = `<span class="emoji">${item.emoji}</span>
+      <span><b>${item.name}</b><small class="cost"></small></span><span class="own"></span>`;
+    b.onclick = () => {
+      if (state.bananas < price(item)) return;
+      state.bananas -= price(item);
+      state.owned[item.id] = owned(item.id) + 1;
+      save(); draw();
     };
-  </script>
+    shop.appendChild(b);
+  }
+
+  function draw() {
+    document.getElementById("count").textContent = fmt(state.bananas) + (Math.floor(state.bananas) === 1 ? " banana" : " bananas");
+    document.getElementById("rate").textContent = fmt(perSec()) + " bananas per second";
+    for (const item of shopItems) {
+      const b = document.getElementById("buy-" + item.id);
+      b.querySelector(".cost").textContent = `${fmt(price(item))} 🍌 · +${item.perSec}/sec`;
+      b.querySelector(".own").textContent = owned(item.id) || "";
+      b.disabled = state.bananas < price(item);
+    }
+  }
+
+  document.getElementById("banana").onclick = (e) => {
+    state.bananas++;
+    const p = document.createElement("div");
+    p.className = "pop"; p.textContent = "+1";
+    p.style.left = e.clientX - 10 + "px"; p.style.top = e.clientY - 20 + "px";
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+    save(); draw();
+  };
+
+  document.getElementById("reset").onclick = () => {
+    if (confirm("Start over from 0 bananas?")) { state = { bananas: 0, owned: {} }; save(); draw(); }
+  };
+
+  setInterval(() => { state.bananas += perSec() / 10; draw(); }, 100);
+  setInterval(save, 2000);
+  draw();
+</script>
 </body>
 </html>

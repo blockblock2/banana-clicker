@@ -1,8 +1,10 @@
 {
   "name": "banana-clicker",
   "title": "Banana Clicker",
-  "version": "1.2.0",
-  "description": "Click bananas, buy monkeys — right in your terminal.",
-  "main": "banana-clicker.js",
-  "icon": "icon.png"
+  "version": "2.0.0",
+  "description": "Click the banana, hire monkeys, launch banana rockets.",
+  "main": "banana-clicker.html",
+  "icon": "icon.png",
+  "width": 460,
+  "height": 720
 }
